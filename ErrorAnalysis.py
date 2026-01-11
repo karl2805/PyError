@@ -9,7 +9,7 @@ pm = chr(177)
 
 
 class EQ(object):
-    def __init__(self, value:float, error:float, unit:u.Quantity, name:str=None, symbol:str='not_set'):
+    def __init__(self, value:float, error:float, unit:u.Quantity, name:str=None, symbol:str='?'):
         self._value = value * unit
         self._error = error * unit
         self.unit = unit
@@ -38,6 +38,7 @@ class EQ(object):
     def _check_units(self):
         if not self._value.unit == self._error.unit == self.unit:
             raise Exception("EQ object unit mismatch") 
+        
     
     def si(self):
         """
@@ -47,6 +48,28 @@ class EQ(object):
         
     def __str__(self):
         return f"{self.name} = ({self._value.value} \xb1 {self._error.value}) {self.unit}"
+ 
+ 
+def error_formula(str_f:str) -> sym.Expr:
+    f = s.sympify(str_f)
+    symbols = f.free_symbols
+    block_exprs = []
+
+    for sym in symbols:
+        del_sym = s.diff(f, sym)
+        d_sym = s.symbols('\\sigma' + str(sym))
+        block_exprs.append(del_sym**2 * d_sym**2)
+
+    return s.sqrt(sum(block_exprs))    
+    
+def compute_expression(expr:str, **kwargs:EQ):
+    error_expr = error_formula(expr)
+    symbols = sym.symbols(list(map(str, kwargs.keys())))
+    print(type(symbols))
+    
+    
+whatever = compute_expression('x + y + 2 * 3', x=2, y=3, test=3)    
+    
         
 def measure_object(cls):
     
@@ -65,25 +88,12 @@ def measure_object(cls):
             setattr(self.__class__, key, kwargs[key])
             value.name = key
             
-            
-
-            
     cls.__str__ = __str__   
     cls.__init__ = __init__
     return cls
 
 
-def error_formula(str_f:str):
-    f = s.sympify(str_f)
-    symbols = f.free_symbols
-    block_exprs = []
 
-    for sym in symbols:
-        del_sym = s.diff(f, sym)
-        d_sym = s.symbols('\\sigma' + str(sym))
-        block_exprs.append(del_sym**2 * d_sym**2)
-
-    return s.sqrt(sum(block_exprs)) 
         
 
 
@@ -96,4 +106,3 @@ sun = Sun(diameter = EQ(100, 50, u.m),
 
 test = sun.diameter * sun.lum
 test.name = "test"
-print(test)
