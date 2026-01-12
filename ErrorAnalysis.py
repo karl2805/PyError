@@ -20,6 +20,7 @@ class EQ(object):
         """
         Multiples two EQ objects togeater
         Uses the error propogation formula for error
+        Not sure if this is really needed
         """
         if not isinstance(other, EQ):
             return NotImplemented
@@ -90,6 +91,14 @@ class EQ(object):
  
  
 def error_formula(str_f:str) -> sym.Expr:
+    """Get the error formula of the inputted expression
+
+    Args:
+        str_f (str): The input expression to compute the error formula of.
+
+    Returns:
+        sym.Expr: The computed error formula as a sympy expression.
+    """
     f = sym.sympify(str_f)
     symbols = f.free_symbols
     block_exprs = []
@@ -132,7 +141,7 @@ def compute_expression(str_expr:str, name:str=None, symbol:str='?', if_dimension
     error_result = error_expr.subs(symbol_value_pairs + symbol_error_pairs)
     unit_result = compute_unit(*units)
     
-    #if there are literals in the unit_result get rid of them
+    #if there are literals (Quantity Objects with not error) in the unit_result get rid of them
     if isinstance(unit_result, u.Quantity):
         unit_result = unit_result.unit
     
@@ -143,23 +152,33 @@ def compute_expression(str_expr:str, name:str=None, symbol:str='?', if_dimension
     return EQ(value_result, error_result, unit_result, name, symbol, error_formula=error_expr)
     
     
-def latex_err(expr: sym.Expr):
-    expr_str = str(expr)
+def latex_err(error_expr: sym.Expr):
+    """Convert an error expression to latex for printing. Only to be used on error formulas!
+
+    Args:
+        error_expr (sym.Expr): The error formula.
+
+    Returns:
+        _type_: The error formula to print
+    """
+    expr_str = str(error_expr)
     no_abs = expr_str.replace("Abs", '')
     return sym.latex(sym.sympify(no_abs))
 
         
 def measure_object(cls):
     
+    #I want the ---s to be the length of the longest output and have the name of the measure_object in the center.
+    #Shouldn't be too difficult to do
     def __str__(self):
         member_variables = [x for x in dir(self) if not '__' in x]
 
-        string:str = f"-----------{cls.__name__}---------------\n"
+        string:str = f"---------------{cls.__name__}---------------\n"
 
         for member in member_variables:
             string = f"{string} {EQ.__str__(getattr(self, member))} \n"
         
-        return string + '-----------------------------'
+        return string + '-' * (30 + len(cls.__name__))
     
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -170,7 +189,8 @@ def measure_object(cls):
     cls.__init__ = __init__
     return cls
 
-
+ 
+#this prevents this code block from running if this file is imported to another file
 if __name__ == "__main__":
     @measure_object
     class Sun:
@@ -182,7 +202,6 @@ if __name__ == "__main__":
 
     e_sun_angular_size = "(1 / m) * (d / D)"
     e_sun_radius = "0.5 * t * AU"
-    e_sun_area = "4 * pi "
 
     m = Measurements()
     m.D = EQ(8.5, 0.2, u.cm, "Distance to Screen", "D")
@@ -192,8 +211,13 @@ if __name__ == "__main__":
     m.m = compute_expression("F / f", "Telescope Magnification", "m", F=m.F, f=m.f)
 
     sun = Sun()
-    sun.AngularSize = compute_expression(e_sun_angular_size, "Angular Size", m=m.m, d=m.d, D=m.D)
+    sun.AngularSize = compute_expression(e_sun_angular_size, "Angular Size", if_dimensionless=u.rad, m=m.m, d=m.d, D=m.D)
     test = sun.AngularSize
+    
+    #added functionality to let contant values like AU be passed in without being an EQ object
+    #the outputted unit for this radius is wrong because its being carried over from the angular size. 
+    #angles are weird because their sort of dimensionless, needs to be fixed. In astropy there is a thing called dimensionless_angles()
+    #which seems to be the way to fix it.
     sun.Radius = compute_expression(e_sun_radius, "Radius", 'R', t=sun.AngularSize, AU=1.5e11*u.meter)
 
     temp = sun.Radius.fvalue()
