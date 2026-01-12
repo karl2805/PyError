@@ -229,6 +229,7 @@ if __name__ == "__main__":
     print(sun)
     
     #Needs improvement
+    #the error formula prints with \sigma_{AU} which is zero so the code should remove it. Needs to be fixed
     print("Angular Size Error Formula:", latex_err(error_formula(e_sun_radius)))
     print("Radius Error Formula:", latex_err(error_formula(e_sun_radius)))
 
