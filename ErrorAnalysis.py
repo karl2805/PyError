@@ -105,9 +105,8 @@ def error_formula(str_f:str) -> sym.Expr:
 
     for symbol in symbols:
         del_expr = sym.diff(f, symbol)
-            
-        d_symbol = sym.symbols('d_' + str(symbol))
-        block_exprs.append(sym.Abs(del_expr * d_symbol))
+        delta_symbol = sym.symbols('sigma_' + str(symbol))
+        block_exprs.append(sym.Abs(del_expr * delta_symbol))
 
     return sum(block_exprs)
     
@@ -130,7 +129,7 @@ def compute_expression(str_expr:str, name:str=None, symbol:str='?', if_dimension
             kwargs[key] = EQ(value.value, 0.0, value.unit)
             
     symbol_value_pairs = [(symbol, eq.fvalue()) for symbol, eq in kwargs.items()]
-    symbol_error_pairs = [('d_' + symbol, eq.ferror()) for symbol, eq in kwargs.items()]
+    symbol_error_pairs = [('sigma_' + symbol, eq.ferror()) for symbol, eq in kwargs.items()]
     
     value_symbols = sym.symbols(list(kwargs.keys()))
     compute_unit = sym.lambdify(value_symbols, value_expr, 'math')
@@ -201,13 +200,13 @@ if __name__ == "__main__":
         pass
 
     e_sun_angular_size = "(1 / m) * (d / D)"
-    e_sun_radius = "0.5 * t * AU"
+    e_sun_radius = "0.5 * theta * AU"
 
     m = Measurements()
     m.D = EQ(8.5, 0.2, u.cm, "Distance to Screen", "D")
     m.d = EQ(1.4, 0.1, u.cm, "Diameter of Sun Projection", "d")
     m.F = EQ(350, 1, u.mm, "Telescope Focal Length", "F")
-    m.f = EQ(20, 1, u.mm, "Lens Focal Length")
+    m.f = EQ(20, 1, u.mm, "Lens Focal Length", "f")
     m.m = compute_expression("F / f", "Telescope Magnification", "m", F=m.F, f=m.f)
 
     sun = Sun()
@@ -216,9 +215,9 @@ if __name__ == "__main__":
     
     #added functionality to let contant values like AU be passed in without being an EQ object
     #the outputted unit for this radius is wrong because its being carried over from the angular size. 
-    #angles are weird because their sort of dimensionless, needs to be fixed. In astropy there is a thing called dimensionless_angles()
+    #angles are weird because they're sort of dimensionless, needs to be fixed. In astropy there is a thing called dimensionless_angles()
     #which seems to be the way to fix it.
-    sun.Radius = compute_expression(e_sun_radius, "Radius", 'R', t=sun.AngularSize, AU=1.5e11*u.meter)
+    sun.Radius = compute_expression(e_sun_radius, "Radius", 'R', theta=sun.AngularSize, AU=1.5e11*u.meter)
 
     temp = sun.Radius.fvalue()
     temp = temp * u.meter
@@ -228,6 +227,9 @@ if __name__ == "__main__":
     
     print(sun)
     
+    #Needs improvement
+    print("Angular Size Error Formula:", latex_err(error_formula(e_sun_radius)))
+    print("Radius Error Formula:", latex_err(error_formula(e_sun_radius)))
 
 
 
