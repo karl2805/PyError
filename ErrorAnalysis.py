@@ -225,6 +225,7 @@ if __name__ == "__main__":
     temp2 = sun.Radius.ferror()
     temp2 = temp2 * u.meter
     
+    print(m)
     print(sun)
     
     #Needs improvement
