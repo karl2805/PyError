@@ -80,7 +80,7 @@ class EQ(object):
         self._check_units()
         return self._value.unit
     
-    def to(self, unit: u.unit):
+    def to(self, unit: u.Unit):
         """
         Switch Units    
         """
@@ -206,8 +206,10 @@ if __name__ == "__main__":
     temp2 = sun.Radius.ferror()
     temp2 = temp2 * u.meter
     
-    print(temp.to(u.km), temp2.to(u.km))
     print(sun)
+    
+
+
 
 
 
