@@ -134,11 +134,11 @@ def compute_expression(str_expr:str, name:str=None, symbol:str='?', if_dimension
     value_symbols = sym.symbols(list(kwargs.keys()))
     compute_unit = sym.lambdify(value_symbols, value_expr, 'math')
     
-    units = [eq.get_unit() for eq in kwargs.values()]
+    quantities = [eq.qvalue() for eq in kwargs.values()]
     
     value_result = value_expr.subs(symbol_value_pairs)
     error_result = error_expr.subs(symbol_value_pairs + symbol_error_pairs)
-    unit_result = compute_unit(*units)
+    unit_result = compute_unit(*quantities).unit
     
     #if there are literals (Quantity Objects with not error) in the unit_result get rid of them
     if isinstance(unit_result, u.Quantity):
@@ -190,7 +190,7 @@ def measure_object(cls):
 
  
 #this prevents this code block from running if this file is imported to another file
-if __name__ == "__main__":
+if __name__ == "":
     @measure_object
     class Sun:
         pass
@@ -234,6 +234,16 @@ if __name__ == "__main__":
     print("Radius Error Formula:", latex_err(error_formula(e_sun_radius)))
 
 
+@measure_object
+class Nico:
+    pass
+
+N = Nico()
+N.a = EQ(10, 2, u.cm, "Letter a", "a")
+N.b = EQ(5, 1, u.cm, "Let b", "b")
+N.c = compute_expression("a + b", "Hyp", "c", a=N.a, b=N.b)
+
+print(N)
 
 
 
