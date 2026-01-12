@@ -1,8 +1,7 @@
 from astropy import units as u
-import sympy as s
 import sympy as sym
 from IPython.display import display, Math
-s.init_printing()
+sym.init_printing()
 
 pm = chr(177)
 
@@ -149,9 +148,6 @@ def latex_err(expr: sym.Expr):
     no_abs = expr_str.replace("Abs", '')
     return sym.latex(sym.sympify(no_abs))
 
-    
-
-    
         
 def measure_object(cls):
     
